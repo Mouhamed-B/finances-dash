@@ -2,6 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use App\Models\User;
+use DutchCodingCompany\FilamentSocialite\FilamentSocialitePlugin;
+use DutchCodingCompany\FilamentSocialite\Provider;
+use Laravel\Socialite\Contracts\User as SocialiteUserContract;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -53,6 +58,29 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->plugin(
+                FilamentSocialitePlugin::make()
+                            // (required) Add providers corresponding with providers in `config/services.php`. 
+                            ->providers([
+                                // Create a provider 'gitlab' corresponding to the Socialite driver with the same name.
+                                Provider::make('github')
+                                    ->label('Github')
+                                    ->icon('fab-github')
+                                    ->color(Color::hex('#1F2328'))
+                                    ->outlined(false)
+                                    ->stateless(false)
+                                    ->scopes(['read:user'])
+                            ])
+                            ->registration(true)
+                            ->createUserUsing(function (string $provider, SocialiteUserContract $oauthUser, FilamentSocialitePlugin $plugin): Authenticatable {
+                                $user = new User();
+                                $user->name = $oauthUser->getName() ?? $oauthUser->getNickname() ?? explode('@', $oauthUser->getEmail())[0];
+                                $user->email = $oauthUser->getEmail();
+                                $user->email_verified_at = now();
+                                $user->save();
+                                return $user;
+                            })
+            );
     }
 }
