@@ -2,103 +2,121 @@
 
 namespace App\Filament\Widgets;
 
-use Filament\Widgets\ChartWidget;
 use Leandrocfe\FilamentApexCharts\Widgets\ApexChartWidget;
 use App\Models\Income;
 use App\Models\Expense;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 
 class IncomeExpenseChart extends ApexChartWidget
 {
     protected static ?string $heading = 'Income, Expenses, and Balance over time';
+    protected static ?string $chartId = 'incomeExpenseChart';
 
     protected int | string | array $columnSpan = [
         'sm' => 2,
         'md' => 6,
     ];
 
-    protected function getData(): array
+    public function getType(): string {
+        return 'bar';
+    }
+
+    protected function getOptions(): array
     {
         $userId = Auth::id();
         $thirtyDaysAgo = now()->subDays(30);
 
-        // Fetch income data using Eloquent
         $incomeData = Income::where('user_id', $userId)
             ->where('created_at', '>=', $thirtyDaysAgo)
-            ->selectRaw('DATE(created_at) as date, SUM(amount) as total')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->pluck('total', 'date');
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->created_at->format('Y-m-d');
+            })
+            ->map(function ($group) {
+                return $group->sum('amount');
+            })
+            ->sortKeys();
 
-        // Fetch expense data using Eloquent
         $expenseData = Expense::where('user_id', $userId)
             ->where('created_at', '>=', $thirtyDaysAgo)
-            ->selectRaw('DATE(created_at) as date, SUM(amount) as total')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->pluck('total', 'date');
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->created_at->format('Y-m-d');
+            })
+            ->map(function ($group) {
+                return -$group->sum('amount');
+            })
+            ->sortKeys();
 
-        // Merge both income and expense data
-        $dates = array_unique(array_merge(array_keys($incomeData->toArray()), array_keys($expenseData->toArray())));
+        $dates = array_unique(array_merge($incomeData->keys()->toArray(), $expenseData->keys()->toArray()));
+        sort($dates);
 
-        // Prepare the data for the chart
-        $incomeValues = [];
-        $expenseValues = [];
-        $balanceValues = [];
-        foreach ($dates as $date) {
-            $income = $incomeData[$date] ?? 0;
-            $expense = $expenseData[$date] ?? 0;
-            $balance = $income - $expense;
-
-            $incomeValues[] = $income;
-            $expenseValues[] = $expense;
-            $balanceValues[] = $balance;
-        }
+        $balanceData = collect($dates)->map(function ($date) use ($incomeData, $expenseData) {
+            return ($incomeData[$date] ?? 0) + ($expenseData[$date] ?? 0);
+        });
 
         return [
+            'chart' => [
+                'type' => 'bar',
+                'height' => 300,
+                'toolbar' => [
+                    'show' => true,
+                ],
+                'stacked' => false,
+            ],
             'series' => [
                 [
                     'name' => 'Income',
-                    'data' => $incomeValues,
+                    'type' => 'bar',
+                    'data' => $incomeData->values()->toArray(),
                 ],
                 [
                     'name' => 'Expenses',
-                    'data' => $expenseValues,
+                    'type' => 'bar',
+                    'data' => $expenseData->values()->toArray(),
                 ],
                 [
                     'name' => 'Balance',
-                    'data' => $balanceValues,
+                    'type' => 'line',
+                    'data' => $balanceData->values()->toArray(),
                 ],
-            ],
-            'chart' => [
-                'type' => 'line',
-                'height' => 350,
-            ],
-            'stroke' => [
-                'curve' => 'smooth', // Smooth lines
             ],
             'xaxis' => [
-                'type' => 'category',
                 'categories' => $dates,
+                'labels' => [
+                    'style' => [
+                        'fontFamily' => 'inherit',
+                        'fontWeight' => 600,
+                    ],
+                ],
             ],
             'yaxis' => [
-                'title' => [
-                    'text' => 'Amount',
+                'labels' => [
+                    'style' => [
+                        'fontFamily' => 'inherit',
+                    ],
                 ],
+            ],
+            'colors' => ['#22c55e', '#ef4444', '#60a5fa'],
+            'stroke' => [
+                'curve' => 'smooth',
+                'width' => 2,
+            ],
+            'grid' => [
+                'borderColor' => '#e2e8f0',
             ],
             'tooltip' => [
-                'shared' => true,
-                'x' => [
-                    'show' => true,
-                    'format' => 'dd MMM yyyy',
-                ],
+                'theme' => 'light',
                 'y' => [
-                    'formatter' => function ($value) {
-                        return number_format($value, 2);
-                    },
+                    'formatter' => 'function (val) { return "$" + val.toFixed(2) }',
                 ],
             ],
-            'colors' => ['#22c55e', '#ef4444', '#60a5fa'], // Income: green, Expenses: red, Balance: blue
         ];
+    }
+
+    protected function updateChartData(): array
+    {
+        return $this->getOptions();
     }
 }
