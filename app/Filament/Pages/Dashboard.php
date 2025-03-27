@@ -23,9 +23,9 @@ class Dashboard extends Page
     {
         return [
             IncomeStats::class,
+            IncomeExpenseChart::class,
             LatestIncomes::class,
             LatestExpenses::class,
-            IncomeExpenseChart::class,
         ];
     }
 
