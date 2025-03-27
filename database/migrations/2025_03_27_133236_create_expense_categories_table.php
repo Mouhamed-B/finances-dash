@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('expense_categories', function (Blueprint $table) {
             $table->id();
             $table->string('label')->nullable(false)->unique();
-            $table->integer('user_id')->references('id')->on('users')->nullable(false);
+            $table->integer('user_id')->references('id')->on('users');
             $table->timestamps();
         });
     }

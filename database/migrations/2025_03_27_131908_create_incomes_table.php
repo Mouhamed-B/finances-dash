@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('note')->default("");
             $table->double('amount')->nullable(false);
-            $table->integer('category')->references('label')->on('income_categories')->nullable(false);
-            $table->integer('user_id')->references('id')->on('users')->nullable(false);
+            $table->integer('category_id')->references('id')->on('income_categories');
+            $table->integer('user_id')->references('id')->on('users');
             $table->timestamps();
         });
     }

@@ -6,6 +6,7 @@ use App\Filament\Resources\IncomeResource\Pages;
 use App\Filament\Resources\IncomeResource\RelationManagers;
 use App\Models\Income;
 use Filament\Forms;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -25,48 +26,39 @@ class IncomeResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextArea::make('note')
-                    ->maxLength(255)
-                    ->default(''),
+                Forms\Components\Select::make('category_id')
+                    ->relationship('category', 'label')
+                    ->required()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('label')
+                            ->required()
+                            ->maxLength(255),
+                    ]),
                 Forms\Components\TextInput::make('amount')
                     ->required()
                     ->numeric(),
-                Forms\Components\Select::make('category_id')
-                    ->relationship('category', 'id')
-                    ->required(),
+                Forms\Components\Textarea::make('note')
+                    ->maxLength(255),
             ])
             ->columns(1);
-    }
-
-    public static function creating($record)
-    {
-        // Auto-assign user_id during record creation
-        $record->user_id = Auth::id(); // Automatically assigns the current user's ID
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('note')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('amount')
-                    ->numeric()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('category.label')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('user.name')
+                Tables\Columns\TextColumn::make('amount')
                     ->numeric()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('note')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('date')
+                    ->dateTime("d/m/Y")
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
