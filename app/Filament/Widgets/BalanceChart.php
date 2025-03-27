@@ -8,10 +8,10 @@ use App\Models\Expense;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 
-class IncomeExpenseChart extends ApexChartWidget
+class BalanceChart extends ApexChartWidget
 {
-    protected static ?string $heading = 'Income and Expenses over time';
-    protected static ?string $chartId = 'incomeExpenseChart';
+    protected static ?string $heading = 'Balance over time';
+    protected static ?string $chartId = 'balanceChart';
 
     protected int | string | array $columnSpan = [
         'sm' => 2,
@@ -19,7 +19,7 @@ class IncomeExpenseChart extends ApexChartWidget
     ];
 
     public function getType(): string {
-        return 'bar';
+        return 'line';
     }
 
     protected function getOptions(): array
@@ -49,9 +49,16 @@ class IncomeExpenseChart extends ApexChartWidget
         $dates = array_unique(array_merge($incomeData->keys()->toArray(), $expenseData->keys()->toArray()));
         sort($dates);
 
+        // Calculate running balance
+        $runningBalance = 0;
+        $balanceData = collect($dates)->map(function ($date) use ($incomeData, $expenseData, &$runningBalance) {
+            $runningBalance += ($incomeData[$date] ?? 0) + ($expenseData[$date] ?? 0);
+            return $runningBalance;
+        });
+
         return [
             'chart' => [
-                'type' => 'bar',
+                'type' => 'line',
                 'height' => 300,
                 'toolbar' => [
                     'show' => true,
@@ -60,12 +67,8 @@ class IncomeExpenseChart extends ApexChartWidget
             ],
             'series' => [
                 [
-                    'name' => 'Income',
-                    'data' => $incomeData->values()->toArray(),
-                ],
-                [
-                    'name' => 'Expenses',
-                    'data' => $expenseData->values()->toArray(),
+                    'name' => 'Balance',
+                    'data' => $balanceData->values()->toArray(),
                 ],
             ],
             'xaxis' => [
@@ -84,7 +87,7 @@ class IncomeExpenseChart extends ApexChartWidget
                     ],
                 ],
             ],
-            'colors' => ['#22c55e', '#ef4444'],
+            'colors' => ['#60a5fa'],
             'stroke' => [
                 'curve' => 'smooth',
                 'width' => 2,
@@ -105,4 +108,4 @@ class IncomeExpenseChart extends ApexChartWidget
     {
         return $this->getOptions();
     }
-}
+} 

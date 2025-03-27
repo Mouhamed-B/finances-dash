@@ -23,7 +23,10 @@ class IncomeStats extends StatsOverviewWidget
             ->where('created_at', '>=', $thirtyDaysAgo)
             ->sum('amount');
 
-        $balance = $totalIncome - $totalExpenses;
+        // Calculate all-time balance
+        $allTimeIncome = Income::where('user_id', $userId)->sum('amount');
+        $allTimeExpenses = Expense::where('user_id', $userId)->sum('amount');
+        $balance = $allTimeIncome - $allTimeExpenses;
 
         return [
             Stat::make('Income (30 days)', number_format($totalIncome, 2))
@@ -35,7 +38,7 @@ class IncomeStats extends StatsOverviewWidget
                 ->color('danger'),
 
             Stat::make('Balance', number_format($balance, 2))
-                ->description('Income minus expenses')
+                // ->description('All-time income minus expenses')
                 ->color($balance >= 0 ? 'success' : 'danger'),
         ];
     }

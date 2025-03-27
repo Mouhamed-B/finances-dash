@@ -2,12 +2,12 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\BalanceChart;
 use Filament\Pages\Page;
 use App\Filament\Widgets\IncomeStats;
 use App\Filament\Widgets\LatestIncomes;
 use App\Filament\Widgets\LatestExpenses;
 use App\Filament\Widgets\IncomeExpenseChart;
-
 class Dashboard extends Page
 {
     protected static string $routePath = '/';
@@ -26,6 +26,7 @@ class Dashboard extends Page
             IncomeExpenseChart::class,
             LatestIncomes::class,
             LatestExpenses::class,
+            BalanceChart::class,
         ];
     }
 
