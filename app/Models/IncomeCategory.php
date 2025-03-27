@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-abstract class IncomeCategory extends Model
+class IncomeCategory extends Model
 {
     protected $fillable = ["label"];
 
