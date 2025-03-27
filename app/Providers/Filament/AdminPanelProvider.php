@@ -22,6 +22,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\Navigation\NavigationGroup;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -39,6 +40,12 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Pages\Dashboard::class,
+            ])
+            ->navigationGroups([
+                NavigationGroup::make()
+                     ->label('Records'),
+                NavigationGroup::make()
+                    ->label('Categories')
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
@@ -79,6 +86,42 @@ class AdminPanelProvider extends PanelProvider
                                 $user->email = $oauthUser->getEmail();
                                 $user->email_verified_at = now();
                                 $user->save();
+                                
+                                $incomeCategories = [
+                                    ['label' => '💼 Salary'],
+                                    ['label' => '🏢 Business Income'],
+                                    ['label' => '📈 Investments'],
+                                    ['label' => '🏠 Rental Income'],
+                                    ['label' => '🎁 Gifts & Donations'],
+                                    ['label' => '💳 Freelance & Consulting'],
+                                    ['label' => '🏦 Bank Interest'],
+                                    ['label' => '🎰 Lottery & Gambling'],
+                                    ['label' => '📅 Pension & Retirement'],
+                                    ['label' => '🌍 Online Earnings'],
+                                    ['label' => '💰 Loan']
+                                ];
+                                
+                                $expenseCategories = [
+                                    ['label' => '🍔 Food & Dining'],
+                                    ['label' => '🏠 Rent & Mortgage'],
+                                    ['label' => '🚗 Transportation'],
+                                    ['label' => '💡 Utilities & Bills'],
+                                    ['label' => '🛍️ Shopping'],
+                                    ['label' => '⚕️ Healthcare & Medical'],
+                                    ['label' => '🎉 Entertainment & Leisure'],
+                                    ['label' => '✈️ Travel & Vacations'],
+                                    ['label' => '📚 Education & Courses'],
+                                    ['label' => '🎁 Gifts & Donations'],
+                                    ['label' => '👶 Childcare & Parenting'],
+                                    ['label' => '💳 Debt Repayment'],
+                                    ['label' => '🐶 Pets & Animal Care'],
+                                    ['label' => '🏋️ Fitness & Sports'],
+                                    ['label' => '🛠️ Home Maintenance']
+                                ];
+
+                                $user->incomeCategories()->createMany($incomeCategories);
+                                $user->expenseCategories()->createMany($expenseCategories);
+                                
                                 return $user;
                             })
             );
